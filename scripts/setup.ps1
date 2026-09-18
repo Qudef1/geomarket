@@ -1,17 +1,24 @@
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path ".venv")) {
-    python -m venv .venv
+function Invoke-Checked {
+    param([scriptblock]$Command)
+    & $Command
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed with exit code $LASTEXITCODE"
+    }
 }
 
-& .\.venv\Scripts\python.exe -m pip install --upgrade pip
-& .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+if (-not (Test-Path ".venv")) {
+    Invoke-Checked { python -m venv .venv }
+}
+
+Invoke-Checked { & .\.venv\Scripts\python.exe -m pip install --upgrade pip }
+Invoke-Checked { & .\.venv\Scripts\python.exe -m pip install -e ".[dev]" }
 Push-Location frontend
 try {
-    npm.cmd ci
+    Invoke-Checked { npm.cmd ci }
 } finally {
     Pop-Location
 }
 
 Write-Host "Ready. Activate with: .\.venv\Scripts\Activate.ps1"
-

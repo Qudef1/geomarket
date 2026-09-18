@@ -31,7 +31,11 @@ def upgrade() -> None:
             postgresql.UUID(as_uuid=True),
             sa.ForeignKey("analyses.id", ondelete="CASCADE"),
         ),
-        sa.Column("location", geoalchemy2.Geography("POINT", srid=4326), nullable=False),
+        sa.Column(
+            "location",
+            geoalchemy2.Geography("POINT", srid=4326, spatial_index=False),
+            nullable=False,
+        ),
         sa.Column("score", sa.Float(), nullable=False),
         sa.Column("features", sa.JSON(), nullable=False),
         sa.Column("explanation", sa.JSON(), nullable=False),
