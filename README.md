@@ -28,6 +28,8 @@ docker compose up --build
 ```
 
 Open <http://localhost:5173>. API docs are at <http://localhost:8000/docs>.
+If those ports are occupied, set `BACKEND_PORT`, `FRONTEND_PORT`, and the browser-facing
+`VITE_API_URL` in `.env`, then rebuild the frontend image.
 
 For backend-only development, run infrastructure with Docker and the API from the venv:
 
@@ -67,6 +69,8 @@ Example point request:
 See [architecture](docs/architecture.md) for component boundaries and score semantics.
 The [roadmap status](docs/roadmap-status.md) maps implementation evidence and external gates to the
 phases in `PLAN.md`.
+For a hands-on code-reading and refactoring curriculum, follow the
+[MVP-to-portfolio roadmap](docs/portfolio-roadmap.md) one stage and one pull request at a time.
 
 ## Honest limitations and next gates
 
