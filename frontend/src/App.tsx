@@ -15,6 +15,13 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function selectBasePoint(location: Location) {
+    setSelected(location);
+    setResult(null);
+    setCandidates([]);
+    setError(null);
+  }
+
   async function runPoint() {
     setBusy(true); setError(null); setCandidates([]);
     try { setResult(await analyzePoint(selected)); } catch (err) { setError(err instanceof Error ? err.message : "Analysis failed"); }
@@ -42,15 +49,15 @@ export default function App() {
           <p className="eyebrow">Location analysis</p><h1>Find the signal<br />in the city.</h1>
           <p className="intro">Evidence-based placement for your next coffee shop.</p>
           <form onSubmit={submitSearch} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Kamppi, Helsinki…" aria-label="Search location" /><button>→</button></form>
-          {matches.length > 0 && <div className="matches">{matches.slice(0, 4).map((match) => <button key={match.display_name} onClick={() => { setSelected(match); setMatches([]); }}>{match.display_name}</button>)}</div>}
+          {matches.length > 0 && <div className="matches">{matches.slice(0, 4).map((match) => <button key={match.display_name} onClick={() => { selectBasePoint(match); setMatches([]); }}>{match.display_name}</button>)}</div>}
           <label className="field"><span>Business type</span><select><option>Coffee shop</option></select></label>
           <div className="coordinate"><span>Selected point</span><code>{selected.latitude.toFixed(5)}, {selected.longitude.toFixed(5)}</code></div>
-          <p className="hint">Click anywhere on the map to reposition the analysis point.</p>
-          <button className="primary" disabled={busy} onClick={runPoint}>{busy ? "Reading the city…" : "Analyze this location"}</button>
+          <p className="hint">Click the map to place the green base point, then analyze that exact location.</p>
+          <button className="primary" disabled={busy} onClick={runPoint}>{busy ? "Reading the city…" : "Analyze selected point"}</button>
           <button className="secondary" disabled={busy} onClick={runArea}>Rank visible area</button>
           {error && <p className="error" role="alert">{error}</p>}
         </aside>
-        <MapView selected={selected} result={result} candidates={candidates} onSelect={setSelected} onBounds={setBounds} />
+        <MapView selected={selected} result={result} candidates={candidates} onSelect={selectBasePoint} onBounds={setBounds} />
         <aside className="panel result-panel">
           {score ? <>
             <p className="eyebrow">Suitability report</p><div className="score"><strong>{Math.round(score.score * 100)}</strong><span>/100<br /><em>{score.grade}</em></span></div>
@@ -60,10 +67,9 @@ export default function App() {
             <h2>Why this score</h2>
             {[...score.positive_factors.map((text) => ["+", text]), ...score.negative_factors.map((text) => ["−", text])].map(([sign, text], index) => <p className={sign === "+" ? "factor positive" : "factor negative"} key={index}><b>{sign}</b>{text}</p>)}
             {!score.positive_factors.length && !score.negative_factors.length && <p className="empty">No expert rules fired. The score comes from normalized geographic evidence.</p>}
-          </> : candidates.length ? <><p className="eyebrow">Area ranking</p><h2>Top visible candidates</h2><div className="ranking">{candidates.map((candidate) => <button key={candidate.rank} onClick={() => setSelected(candidate.location)}><b>#{candidate.rank}</b><span>{candidate.location.latitude.toFixed(4)}, {candidate.location.longitude.toFixed(4)}</span><strong>{Math.round(candidate.result.score * 100)}</strong></button>)}</div></> : <div className="empty-state"><span>◎</span><h2>Your evidence will appear here</h2><p>Choose a point for a detailed score or rank the current map area.</p></div>}
+          </> : candidates.length ? <><p className="eyebrow">Area ranking</p><h2>Top visible candidates</h2><div className="ranking">{candidates.map((candidate) => <button key={candidate.rank} onClick={() => selectBasePoint(candidate.location)}><b>#{candidate.rank}</b><span>{candidate.location.latitude.toFixed(4)}, {candidate.location.longitude.toFixed(4)}</span><strong>{Math.round(candidate.result.score * 100)}</strong></button>)}</div></> : <div className="empty-state"><span>◎</span><h2>Your evidence will appear here</h2><p>Choose a point for a detailed score or rank the current map area.</p></div>}
         </aside>
       </section>
     </main>
   );
 }
-
