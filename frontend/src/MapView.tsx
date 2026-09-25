@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map, MapMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { BASEMAP_STYLE } from "./mapStyle";
 import type { Candidate, Location, PointResponse } from "./types";
 
 type Props = {
@@ -26,7 +27,7 @@ export function MapView({ selected, result, candidates, onSelect, onBounds }: Pr
     if (!container.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: container.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: BASEMAP_STYLE,
       center: [selected.longitude, selected.latitude],
       zoom: 13,
     });
