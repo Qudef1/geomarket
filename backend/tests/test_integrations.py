@@ -29,6 +29,51 @@ def test_overpass_normalizes_nodes_and_ways() -> None:
 
 
 @pytest.mark.asyncio
+async def test_overpass_falls_back_after_transient_provider_error() -> None:
+    requested_hosts: list[str] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        requested_hosts.append(request.url.host)
+        if request.url.host == "primary.example":
+            return httpx.Response(504, request=request)
+        return httpx.Response(200, request=request, json={"elements": []})
+
+    client = OverpassClient(
+        "https://primary.example/api",
+        "tests",
+        MemoryCache(),
+        60,
+        ("https://fallback.example/api",),
+        httpx.MockTransport(handler),
+    )
+
+    assert await client._fetch("[out:json];node(0,0,1,1);out;") == []
+    assert requested_hosts == ["primary.example", "fallback.example"]
+
+
+@pytest.mark.asyncio
+async def test_overpass_does_not_retry_invalid_queries() -> None:
+    requested_hosts: list[str] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        requested_hosts.append(request.url.host)
+        return httpx.Response(400, request=request)
+
+    client = OverpassClient(
+        "https://primary.example/api",
+        "tests",
+        MemoryCache(),
+        60,
+        ("https://fallback.example/api",),
+        httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(RuntimeError, match="unavailable"):
+        await client._fetch("invalid")
+    assert requested_hosts == ["primary.example"]
+
+
+@pytest.mark.asyncio
 async def test_geocoder_uses_cache() -> None:
     cache = MemoryCache()
     await cache.set_json("geocode:kamppi:5", [{"display_name": "cached"}], 60)

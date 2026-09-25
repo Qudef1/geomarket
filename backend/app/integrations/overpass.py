@@ -12,6 +12,9 @@ class OverpassError(RuntimeError):
     pass
 
 
+TRANSIENT_STATUS_CODES = {406, 429, 500, 502, 503, 504}
+
+
 def _selectors(area: str) -> str:
     lines: list[str] = []
     for tags in POI_TAGS.values():
@@ -30,8 +33,18 @@ def _category(tags: dict[str, str]) -> POICategory | None:
 
 
 class OverpassClient:
-    def __init__(self, url: str, user_agent: str, cache: Cache, ttl: int) -> None:
-        self.url, self.user_agent, self.cache, self.ttl = url, user_agent, cache, ttl
+    def __init__(
+        self,
+        url: str,
+        user_agent: str,
+        cache: Cache,
+        ttl: int,
+        fallback_urls: tuple[str, ...] = (),
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self.urls = tuple(dict.fromkeys((url, *fallback_urls)))
+        self.user_agent, self.cache, self.ttl = user_agent, cache, ttl
+        self.transport = transport
 
     async def around(self, location: Location, radius_m: int = 1000) -> list[POI]:
         area = f"(around:{radius_m},{location.latitude},{location.longitude})"
@@ -51,15 +64,34 @@ class OverpassClient:
         cached = await self.cache.get_json(key)
         if cached is not None:
             return [POI.model_validate(item) for item in cached]
-        try:
-            async with httpx.AsyncClient(
-                headers={"User-Agent": self.user_agent}, timeout=45
-            ) as client:
-                response = await client.post(self.url, data={"data": query})
-                response.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise OverpassError("OpenStreetMap data provider is unavailable") from exc
-        pois = self._normalize(response.json().get("elements", []))
+        payload: dict[str, Any] | None = None
+        last_error: Exception | None = None
+        async with httpx.AsyncClient(
+            headers={"User-Agent": self.user_agent},
+            timeout=45,
+            transport=self.transport,
+        ) as client:
+            for index, url in enumerate(self.urls):
+                try:
+                    response = await client.post(url, data={"data": query})
+                    response.raise_for_status()
+                    payload = response.json()
+                    break
+                except httpx.HTTPStatusError as exc:
+                    last_error = exc
+                    is_last = index == len(self.urls) - 1
+                    if exc.response.status_code not in TRANSIENT_STATUS_CODES or is_last:
+                        break
+                except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                    last_error = exc
+                    if index == len(self.urls) - 1:
+                        break
+                except ValueError as exc:
+                    last_error = exc
+                    break
+        if payload is None:
+            raise OverpassError("OpenStreetMap data provider is unavailable") from last_error
+        pois = self._normalize(payload.get("elements", []))
         await self.cache.set_json(key, [p.model_dump(mode="json") for p in pois], self.ttl)
         return pois
 

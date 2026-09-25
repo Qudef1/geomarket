@@ -19,7 +19,11 @@ def get_analysis_service() -> AnalysisService:
     settings = get_settings()
     cache = RedisCache(get_redis())
     client = OverpassClient(
-        settings.overpass_url, settings.http_user_agent, cache, settings.cache_ttl_seconds
+        settings.overpass_url,
+        settings.http_user_agent,
+        cache,
+        settings.cache_ttl_seconds,
+        settings.overpass_fallback_urls,
     )
     return AnalysisService(client)
 

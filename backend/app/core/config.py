@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://geomarket:geomarket@localhost:5432/geomarket"
     redis_url: str = "redis://localhost:6379/0"
     overpass_url: str = "https://overpass-api.de/api/interpreter"
+    overpass_fallback_urls: tuple[str, ...] = (
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    )
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     http_user_agent: str = "GeoMarketAI/0.1 (development)"
     cache_ttl_seconds: int = Field(default=3600, ge=60, le=86400)

@@ -7,9 +7,10 @@ map. It also ranks candidates across a visible area without making one external 
 
 ## What works
 
-- Search through Nominatim and normalized POI retrieval through Overpass
+- Search through Nominatim and cached POI retrieval with sequential Overpass failover
 - Redis caching for external responses
 - Point scoring with 15 geographic features, six score components, confidence, and traceable rules
+- Click-to-select base points with visible evidence markers, popups, and score results on the map
 - Bounded area-grid generation, a shared region fetch, ranking, and heatmap display
 - Typed FastAPI and React/TypeScript contracts
 - PostgreSQL/PostGIS schema and radius-query boundary with an initial Alembic migration
