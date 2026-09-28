@@ -1,5 +1,9 @@
 # PLAN.md — GeoMarket AI Development Plan
 
+> **Current working plan:** use [Section 27A](#27a-collaborative-execution-plan--mlds-learning-track)
+> for step-by-step ownership. Your tasks are limited to ML, data science, and research; the AI agent
+> owns the surrounding engineering work.
+
 # 1. Goal
 
 Build a production-oriented MVP of GeoMarket AI capable of answering:
@@ -1222,6 +1226,460 @@ Execute the project in this order:
 Do not start by training an ML model.
 
 First build a reliable geospatial data pipeline and deterministic baseline.
+
+---
+
+# 27A. Collaborative Execution Plan — ML/DS Learning Track
+
+This section turns the product roadmap into the working plan from the repository's current state.
+It incorporates the delivery and learning practices in
+[`docs/portfolio-roadmap.md`](docs/portfolio-roadmap.md). Follow the phases in order and use one
+branch and one pull request per numbered phase. Do not begin a phase until its entry gate is met.
+
+## Ownership contract
+
+Every task has exactly one primary owner:
+
+```text
+[YOU — ML/DS/RESEARCH]
+    Work that develops data science judgment: problem formulation, source research,
+    data auditing, feature hypotheses, statistical analysis, experiments, validation,
+    model interpretation, and evidence-based conclusions.
+
+[AI AGENT — ENGINEERING]
+    All other work: backend, frontend, APIs, database, PostGIS, ETL production code,
+    integrations, migrations, infrastructure, security, observability, deployment,
+    automated tests, and documentation wiring.
+```
+
+The AI agent may explain concepts, review your notebook/code, suggest experiments, and help debug
+tooling. It must not silently make the research decision, invent labels, choose the winning model,
+run the final evaluation on your behalf, or write conclusions unsupported by your results. The AI
+agent should productionize your accepted ML/DS artifacts only after you can explain and defend them.
+
+For each phase:
+
+1. The AI agent creates or updates the phase issue with scope, interfaces, and acceptance checks.
+2. Read the relevant request/data path before changing it and record inputs, outputs, side effects,
+   and failure modes.
+3. The AI agent completes engineering prerequisites and characterization tests.
+4. You complete only the listed ML/DS/research tasks and record decisions with evidence.
+5. The AI agent reviews reproducibility and integrates the accepted output into production code.
+6. Run `powershell -ExecutionPolicy Bypass -File .\scripts\check.ps1`.
+7. Close the phase with a short report: problem, method, result, limitations, and next gate.
+
+Use `test:`, `refactor:`, `feat:`, `fix:`, `perf:`, `docs:`, `data:`, and `ml:` commit prefixes.
+Raw data, processed data, feature schemas, and model artifacts must have explicit versions and must
+not be committed when their license, size, or sensitivity makes that inappropriate.
+
+## Current checkpoint
+
+The repository has a working Phase 0–12 product path: point analysis, area candidates, heuristic
+scoring, rules, explanations, ranking, and map visualization. It is not yet a trained intelligent
+system. Before `PLAN.md` Phase 13 begins, the incomplete MVP boundaries below must be made
+trustworthy and reproducible.
+
+```text
+Current capability: deterministic geospatial MVP
+Current execution phase: Collaborative Phase 1 below
+Next ML gate: Collaborative Phase 4 — dataset design and source research
+```
+
+## Collaborative Phase 1 — Freeze and measure the current baseline
+
+**Purpose:** establish evidence that later changes and models can be compared against.
+
+### AI agent responsibilities
+
+- [ ] Record the current commit, environment, configuration, test count, coverage, image sizes, and
+      frontend bundle size.
+- [ ] Add a reproducible benchmark command for point cache miss/hit and 25/100/400-candidate areas.
+- [ ] Capture one license-compliant Helsinki response fixture with retrieval date and attribution.
+- [ ] Verify migrations, PostGIS tables, the GiST index, Redis behavior, and Docker smoke tests.
+- [ ] Add five small tracked issues for the next engineering phase.
+- [ ] Document how to reproduce all baseline measurements from a fresh clone.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Read the current feature, baseline-model, rule, and decision code as one scoring pipeline.
+- [ ] Create `docs/research/baseline-assumptions.md` listing every feature, threshold, weight, rule,
+      expected direction, and possible double-counting relationship.
+- [ ] Formulate at least five falsifiable critiques of the current score, for example whether café
+      density represents competition, demand, or both.
+- [ ] Define what the current score can and cannot claim. Do not describe it as predicted business
+      success, probability, or model confidence.
+
+### Exit gate
+
+- [ ] The existing result can be reproduced, timed, and explained feature by feature.
+- [ ] Baseline limitations are written before any weights or models are changed.
+
+## Collaborative Phase 2 — Complete the trustworthy deterministic product
+
+**Purpose:** remove misleading contracts and make every score reproducible before collecting labels.
+
+### AI agent responsibilities
+
+- [ ] Refactor backend boundaries using small `Geocoder`, `POIProvider`, `Cache`, and repository
+      protocols; reuse and close long-lived HTTP/Redis resources correctly.
+- [ ] Split API routers and centralize typed integration errors and FastAPI error handling.
+- [ ] Make `target_audience` a typed input and pass it to constraint/decision logic instead of
+      silently ignoring it.
+- [ ] Rename heuristic `confidence` to `evidence_coverage`, or document and expose both concepts
+      separately without an API-breaking silent change.
+- [ ] Move all weights, thresholds, saturation points, radii, and rules into validated, versioned
+      business profiles.
+- [ ] Return the complete candidate surface for heatmaps and a separate top-N ranking.
+- [ ] Display the selected radius and evidence completeness in the frontend.
+- [ ] Add characterization, monotonicity, bounds, conflicting-rule, API, and frontend interaction
+      tests.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Define the supported audience segments and state the evidence proxy for each segment.
+- [ ] Create the first feature dictionary with definition, source, unit, radius, valid range,
+      missing-value meaning, expected direction, and known bias.
+- [ ] Propose hypotheses for ambiguous effects, especially competition versus demand and centrality
+      versus neighborhood opportunity.
+- [ ] Design a sensitivity-analysis matrix showing which raw feature should change which component
+      and under what assumptions.
+- [ ] Review sensitivity results and recommend profile changes; label these as expert calibration,
+      not model training.
+
+### Exit gate
+
+- [ ] Every displayed score identifies feature-schema, profile, rule, and scoring versions.
+- [ ] Every accepted input affects behavior or is removed from the public contract.
+- [ ] A reviewer can trace each score contribution back to evidence and an explicit assumption.
+
+## Collaborative Phase 3 — Persistence, spatial validity, and reproducibility
+
+**Purpose:** ensure candidates are real geographic opportunities and analyses can be audited later.
+
+### AI agent responsibilities
+
+- [ ] Implement async SQLAlchemy sessions and repositories for analyses, candidates, feature
+      snapshots, predictions, rule results, and provider metadata.
+- [ ] Add analysis history and paginated candidate endpoints.
+- [ ] Add polygon/district models, validity checks, and PostGIS radius, containment, intersection,
+      and nearest-neighbor queries.
+- [ ] Add a city registry so Helsinki center and bounds are not hard-coded.
+- [ ] Filter or flag candidates on water, restricted land, major roads, and clearly non-commercial
+      surfaces using versioned rules and source data.
+- [ ] Compare Python grid, PostGIS grid, and H3 only with a reproducible benchmark before choosing.
+- [ ] Add migration, transaction, spatial-boundary, rollback, and query-plan integration tests.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Research what constitutes an eligible coffee-shop candidate and distinguish hard exclusions
+      from soft suitability features.
+- [ ] Review a stratified sample of accepted/rejected candidates and calculate disagreement/error
+      categories for the validity rules.
+- [ ] Define the spatial unit of observation to carry into dataset work: point, parcel, building,
+      regular grid cell, or H3 cell, with documented trade-offs.
+- [ ] Write a short research decision explaining whether accessibility should use radial distance,
+      walking-network distance, travel time, or a staged combination.
+
+### Exit gate
+
+- [ ] A stored analysis can reproduce the same deterministic result from retained evidence.
+- [ ] Candidate eligibility has a documented spatial unit and measured review results.
+
+## Collaborative Phase 4 — Define the ML problem and research data sources
+
+**Purpose:** begin original `PLAN.md` Phase 13 without inventing a target.
+
+### AI agent responsibilities
+
+- [ ] Provide a data-source registry format containing URL/provider, license, access method,
+      geography, temporal coverage, update cadence, and ingestion status.
+- [ ] Scaffold immutable raw-data storage, checksums, metadata manifests, and dataset versioning.
+- [ ] Add safe connector interfaces and small source probes only after license/access approval.
+- [ ] Create a data-card template and an automated validation command, but leave research fields and
+      conclusions for you.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Write the decision question in one sentence and define the unit of observation.
+- [ ] Compare candidate targets such as 12/24-month survival, closure risk, sales, rent-adjusted
+      revenue, or review-volume growth. Reject targets that merely reproduce heuristic rules.
+- [ ] Research legally usable sources for outcomes, historical businesses, demographics,
+      employment, transit frequency, pedestrian activity, rent, land use, and street networks.
+- [ ] Record license, provenance, geographic/temporal coverage, access limitations, expected bias,
+      and leakage risk for every source.
+- [ ] Select one primary target and at most one explicitly named proxy target.
+- [ ] Define observation time, prediction horizon, inclusion/exclusion criteria, and how openings,
+      closures, relocations, chains, and missing outcomes are treated.
+- [ ] Draft the dataset card: intended use, exclusions, ethical risks, known bias, refresh plan, and
+      claims the dataset cannot support.
+
+### Data gate
+
+- [ ] The target is observable, legally usable, temporally aligned, and not derived from the current
+      score.
+- [ ] At least one source supports features as they existed at observation time.
+- [ ] If this gate fails, stop ML work and continue improving the deterministic system. Do not create
+      synthetic success labels and present them as truth.
+
+## Collaborative Phase 5 — Build and audit dataset v1
+
+**Purpose:** produce a reproducible, leakage-aware dataset suitable for honest experimentation.
+
+### AI agent responsibilities
+
+- [ ] Implement idempotent ingestion and transformation jobs from approved source specifications.
+- [ ] Preserve immutable raw snapshots, checksums, retrieval metadata, schemas, and lineage.
+- [ ] Implement deterministic spatial joins and point-in-time feature computation.
+- [ ] Add schema checks for coordinates, timestamps, duplicates, ranges, and referential integrity.
+- [ ] Provide one command that rebuilds the processed dataset from available raw snapshots.
+- [ ] Keep exploratory code in notebooks and move reusable transforms into tested Python modules.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Create an EDA notebook covering sample size, target distribution, missingness, outliers,
+      coordinate errors, duplicates, temporal coverage, spatial clustering, and source overlap.
+- [ ] Map the target and important features; inspect whether neighboring observations are near
+      duplicates.
+- [ ] Audit leakage feature by feature, including future information, post-opening reviews,
+      contemporaneous competitors, and spatially duplicated records.
+- [ ] Quantify class imbalance or target skew and propose evaluation implications without altering
+      the final holdout.
+- [ ] Define district/city/time grouping variables before model comparison.
+- [ ] Freeze a final geographic or temporal holdout and record its checksum. Do not inspect its
+      model results during feature/model selection.
+- [ ] Finish dataset-card sections for quality, bias, exclusions, and fitness for use.
+
+### Exit gate
+
+- [ ] `dataset_v1` is reproducible, versioned, provenance-documented, and passes automated checks.
+- [ ] The frozen holdout and leakage policy were defined before model selection.
+
+## Collaborative Phase 6 — Feature research and deterministic baseline evaluation
+
+**Purpose:** establish whether the existing feature space contains useful, stable signal.
+
+### AI agent responsibilities
+
+- [ ] Implement the accepted feature schema in a versioned offline/online-compatible feature module.
+- [ ] Add point-in-time joins, missingness indicators, schema compatibility checks, and unit tests.
+- [ ] Create reproducible experiment configuration and result-table formats.
+- [ ] Ensure serving and training use the same feature definitions where applicable.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Perform univariate and multivariate feature analysis using training data only.
+- [ ] Investigate transformations for counts, densities, distance decay, ratios, network access, and
+      spatial context.
+- [ ] Evaluate missingness as information instead of silently replacing it with arbitrary values.
+- [ ] Measure feature stability across districts and time periods.
+- [ ] Detect redundant, highly correlated, target-leaking, or proxy-sensitive features.
+- [ ] Evaluate the deterministic heuristic on the training/validation design using target-appropriate
+      metrics. This is the required baseline for every later model.
+- [ ] Publish a feature-selection rationale and baseline evaluation report, including negative
+      findings.
+
+### Exit gate
+
+- [ ] Feature schema v1 and baseline metrics are frozen before trained-model comparison.
+- [ ] Every retained feature has a source, timestamp rule, transformation, and justification.
+
+## Collaborative Phase 7 — Train honest ML baselines
+
+**Purpose:** learn whether a trained model improves the real target.
+
+### AI agent responsibilities
+
+- [ ] Add isolated training dependencies and reproducible CLI/configuration scaffolding.
+- [ ] Add artifact storage conventions for data version, feature version, code commit, environment,
+      seed, metrics, and model card.
+- [ ] Add automated checks for determinism, schema mismatch, artifact loading, and inference shape.
+- [ ] Keep training-only libraries out of the serving image unless production inference requires
+      them.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Choose metrics from the target before training: regression, classification, calibration, or
+      ranking metrics as appropriate.
+- [ ] Train a dummy baseline, a simple linear/logistic model, and at least one tree-based model using
+      fixed seeds and pipelines.
+- [ ] Use only the predefined geographic/temporal training and validation groups.
+- [ ] Tune within training/validation data; do not repeatedly inspect the final holdout.
+- [ ] Compare every model against the deterministic heuristic on identical observations and metrics.
+- [ ] Analyze calibration, uncertainty, subgroup/geographic errors, residual maps, and concrete
+      failure cases.
+- [ ] Record experiments, including models that failed or did not beat the heuristic.
+- [ ] Select a candidate only if improvement is meaningful, stable, and relevant to the decision
+      problem; otherwise retain the deterministic baseline.
+- [ ] Write the model card and model-selection report in your own words.
+
+### Model gate
+
+- [ ] The experiment is reproducible from a clean environment.
+- [ ] The final holdout was untouched during selection.
+- [ ] Deployment requires measurable improvement over the deterministic baseline, acceptable
+      calibration/error behavior, and no unresolved leakage.
+
+## Collaborative Phase 8 — Spatial validation and learning to rank
+
+**Purpose:** move from plausible point predictions to trustworthy area recommendations.
+
+### AI agent responsibilities
+
+- [ ] Implement reusable geographic/temporal splitters from your approved design.
+- [ ] Add ranking dataset/group construction and reproducible ranking experiment commands.
+- [ ] Add evaluation-report generation without choosing conclusions or hiding failed runs.
+- [ ] Add safeguards preventing train/test spatial overlap and accidental holdout reuse.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Compare leave-one-district-out, leave-one-city-out, and temporal holdouts where data permits.
+- [ ] Quantify how performance changes with distance from training regions and data-density bands.
+- [ ] Define a ranking query/group, relevance target, and candidate set that match the product flow.
+- [ ] Train and compare pointwise and pairwise/listwise approaches only if the target supports them.
+- [ ] Evaluate NDCG@5/10, MAP, Precision@K, stability of the top-K, and geographic failure patterns.
+- [ ] Compare ranking models with sorting the deterministic and supervised point scores.
+- [ ] Decide whether ranking ML is justified and document limitations for unseen cities.
+
+### Exit gate
+
+- [ ] The chosen evaluation matches how users request and compare candidate locations.
+- [ ] Generalization claims are limited to geographies and time periods supported by evidence.
+
+## Collaborative Phase 9 — Production inference and explainability
+
+**Purpose:** serve a validated model without losing traceability or the deterministic fallback.
+
+### AI agent responsibilities
+
+- [ ] Implement the accepted artifact behind `LocationScoringModel` without placing inference in API
+      routes.
+- [ ] Validate feature schema and model/profile versions at startup and per prediction.
+- [ ] Retain the deterministic fallback and make fallback use visible in response metadata.
+- [ ] Persist prediction inputs, artifact version, outputs, rule effects, and explanation evidence.
+- [ ] Expose model contributions and uncertainty through typed APIs and accessible UI components.
+- [ ] Add shadow-mode, rollback, corrupted-artifact, schema-mismatch, and fallback tests.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Choose an explanation method appropriate to the accepted model.
+- [ ] Validate global and local explanations for stability, direction, correlated-feature behavior,
+      and reconciliation with predictions.
+- [ ] Compare model explanations with rule effects and identify double counting or contradictions.
+- [ ] Define out-of-distribution and low-evidence warning criteria using validation results.
+- [ ] Write user-facing interpretation guidance that distinguishes association, prediction, and
+      causation.
+
+### Exit gate
+
+- [ ] Every prediction is traceable to evidence, feature schema, model artifact, rules, and version.
+- [ ] Explanations are tested model evidence, not LLM-generated geographic claims.
+
+## Collaborative Phase 10 — Multi-business research and profiles
+
+**Purpose:** prove the architecture generalizes without copying the coffee-shop pipeline.
+
+### AI agent responsibilities
+
+- [ ] Implement generic profile loading, validation, versioning, APIs, and frontend selection.
+- [ ] Reuse candidate generation, features, decisions, persistence, and explanations across profiles.
+- [ ] Add contract and regression tests proving that profiles do not create separate pipelines.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Select the next business type based on obtainable outcomes and meaningful feature differences.
+- [ ] Research its customer segments, competitors, complementary POIs, spatial scale, constraints,
+      and measurable success target.
+- [ ] Propose and validate its feature/profile specification using the same evidence standards.
+- [ ] Determine whether an existing model transfers, needs recalibration, or requires a separate
+      training dataset; support the conclusion with experiments.
+
+### Exit gate
+
+- [ ] A second business type works through shared infrastructure and has its own documented evidence.
+
+## Collaborative Phase 11 — Security, observability, performance, and background work
+
+**Purpose:** make the system diagnosable and safe without assigning non-ML engineering to you.
+
+### AI agent responsibilities
+
+- [ ] Add request/analysis IDs, structured event fields, readiness checks, and metrics for providers,
+      cache, features, model inference, persistence, and total latency.
+- [ ] Add bounded requests, polygon/candidate/radius limits, concurrency controls, rate limiting,
+      secure headers, strict environment-specific CORS, and container hardening.
+- [ ] Add reproducible performance benchmarks and profile before optimizing.
+- [ ] Introduce a background job state machine and worker only if measured synchronous latency or
+      reliability justifies it.
+- [ ] Add CI integration tests with PostGIS/Redis plus dependency, secret, image, and migration scans.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Define acceptable inference-latency and batch-scoring budgets based on experiment size and
+      product usage assumptions.
+- [ ] Test whether performance optimizations, approximations, or feature freshness changes alter
+      model metrics or top-K stability.
+- [ ] Define monitoring thresholds for feature drift, prediction drift, evidence coverage, and model
+      degradation, including the statistical limitations of each alert.
+
+### Exit gate
+
+- [ ] A failed or slow analysis is explainable from telemetry.
+- [ ] Performance changes preserve model quality within documented tolerances.
+
+## Collaborative Phase 12 — Deployment and portfolio evidence
+
+**Purpose:** publish a defensible project whose claims are backed by reproducible evidence.
+
+### AI agent responsibilities
+
+- [ ] Create development/production configurations, managed-secret integration, TLS, health checks,
+      backups, restore tests, migration release steps, rollback, quotas, and monitoring.
+- [ ] Publish versioned images with vulnerability scans, SBOMs, and immutable tags.
+- [ ] Add a provider-independent seeded demo mode, staging smoke tests, screenshots, architecture
+      diagrams, ADRs, runbook, API examples, and a short demo-video script.
+- [ ] Put quick start, test status, architecture, limitations, and live/demo links above the README
+      fold.
+
+### Your ML/DS/research responsibilities
+
+- [ ] Publish the final data card, feature dictionary, baseline report, spatial-validation report,
+      model card, explainability examples, and limitations.
+- [ ] Create the ML/DS portion of the case study: question, data provenance, leakage controls,
+      experiment design, metrics, failures, final decision, and lessons learned.
+- [ ] Verify every numerical ML claim against a reproducible result artifact.
+- [ ] Prepare to explain why the split strategy, metrics, baseline, model, and uncertainty treatment
+      match the business-location decision problem.
+
+### Final gate
+
+- [ ] A fresh clone passes setup, checks, migrations, and smoke tests.
+- [ ] The public demo has a video/seeded fallback and documented operating limits.
+- [ ] ML claims exist only if the data and model gates passed; otherwise the project explicitly ships
+      the validated deterministic system and documents why that was the honest decision.
+
+## Your ML/DS learning outcomes
+
+By completing only your assigned tasks, you should be able to demonstrate and explain:
+
+```text
+problem and target formulation
+data-source and license research
+data cards, lineage, and dataset versioning
+geospatial exploratory data analysis
+missingness, bias, and leakage audits
+feature hypotheses and sensitivity analysis
+spatial and temporal cross-validation
+baseline design and fair model comparison
+classification/regression/ranking metrics
+calibration, uncertainty, and subgroup errors
+learning-to-rank and top-K evaluation
+SHAP or appropriate model explanations
+drift monitoring and model limitations
+reproducible experiment and model cards
+```
+
+The objective is not merely to deploy a model. The objective is for you to be able to defend every
+data and modeling decision while the AI agent handles the surrounding production engineering.
 
 ---
 

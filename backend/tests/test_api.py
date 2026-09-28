@@ -36,6 +36,32 @@ def test_health(client: TestClient) -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_cors_accepts_loopback_frontend(client: TestClient) -> None:
+    response = client.options(
+        "/api/v1/analysis/point",
+        headers={
+            "Origin": "http://127.0.0.1:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
+
+def test_cors_rejects_untrusted_origin(client: TestClient) -> None:
+    response = client.options(
+        "/api/v1/analysis/point",
+        headers={
+            "Origin": "https://example.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 400
+
+
 def test_business_types(client: TestClient) -> None:
     assert client.get("/api/v1/business-types").json() == [
         {"id": "coffee_shop", "name": "Coffee Shop"}

@@ -9,7 +9,7 @@ function Invoke-Checked {
 }
 
 if (-not (Test-Path ".venv")) {
-    Invoke-Checked { python -m venv .venv }
+    Invoke-Checked { py -m venv .venv }
 }
 
 Invoke-Checked { & .\.venv\Scripts\python.exe -m pip install --upgrade pip }

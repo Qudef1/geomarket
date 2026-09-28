@@ -2,6 +2,7 @@ import hashlib
 from typing import Any
 
 import httpx
+from pydantic import ValidationError
 
 from app.configuration import POI_TAGS
 from app.domain.models import POI, BoundingBox, Location, POICategory
@@ -75,7 +76,10 @@ class OverpassClient:
                 try:
                     response = await client.post(url, data={"data": query})
                     response.raise_for_status()
-                    payload = response.json()
+                    decoded = response.json()
+                    if not isinstance(decoded, dict):
+                        raise ValueError("Overpass response must be an object")
+                    payload = decoded
                     break
                 except httpx.HTTPStatusError as exc:
                     last_error = exc
@@ -91,32 +95,45 @@ class OverpassClient:
                     break
         if payload is None:
             raise OverpassError("OpenStreetMap data provider is unavailable") from last_error
-        pois = self._normalize(payload.get("elements", []))
+        elements = payload.get("elements", [])
+        if not isinstance(elements, list):
+            raise OverpassError("OpenStreetMap data provider returned an invalid response")
+        pois = self._normalize(elements)
         await self.cache.set_json(key, [p.model_dump(mode="json") for p in pois], self.ttl)
         return pois
 
     @staticmethod
-    def _normalize(elements: list[dict[str, Any]]) -> list[POI]:
+    def _normalize(elements: list[Any]) -> list[POI]:
         pois: list[POI] = []
         seen: set[str] = set()
         for element in elements:
-            osm_id = f"{element.get('type', 'node')}/{element.get('id')}"
+            if not isinstance(element, dict) or element.get("id") is None:
+                continue
+            osm_id = f"{element.get('type', 'node')}/{element['id']}"
             if osm_id in seen:
                 continue
             tags = element.get("tags", {})
+            if not isinstance(tags, dict):
+                continue
             category = _category(tags)
-            lat = element.get("lat", element.get("center", {}).get("lat"))
-            lon = element.get("lon", element.get("center", {}).get("lon"))
+            center = element.get("center", {})
+            if not isinstance(center, dict):
+                center = {}
+            lat = element.get("lat", center.get("lat"))
+            lon = element.get("lon", center.get("lon"))
             if category is None or lat is None or lon is None:
                 continue
-            seen.add(osm_id)
-            pois.append(
-                POI(
-                    osm_id=osm_id,
-                    category=category,
-                    location=Location(latitude=lat, longitude=lon),
-                    name=tags.get("name"),
-                    tags={str(k): str(v) for k, v in tags.items()},
+            try:
+                pois.append(
+                    POI(
+                        osm_id=osm_id,
+                        category=category,
+                        location=Location(latitude=lat, longitude=lon),
+                        name=tags.get("name"),
+                        tags={str(k): str(v) for k, v in tags.items()},
+                    )
                 )
-            )
+            except (TypeError, ValidationError):
+                continue
+            seen.add(osm_id)
         return pois

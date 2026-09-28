@@ -1,7 +1,11 @@
 import json
+import logging
 from typing import Any, Protocol
 
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
+
+logger = logging.getLogger(__name__)
 
 
 class Cache(Protocol):
@@ -14,11 +18,18 @@ class RedisCache:
         self.redis = redis
 
     async def get_json(self, key: str) -> Any | None:
-        value = await self.redis.get(key)
-        return json.loads(value) if value else None
+        try:
+            value = await self.redis.get(key)
+            return json.loads(value) if value else None
+        except (RedisError, json.JSONDecodeError):
+            logger.warning("cache_read_failed", exc_info=True)
+            return None
 
     async def set_json(self, key: str, value: Any, ttl: int) -> None:
-        await self.redis.set(key, json.dumps(value), ex=ttl)
+        try:
+            await self.redis.set(key, json.dumps(value), ex=ttl)
+        except RedisError:
+            logger.warning("cache_write_failed", exc_info=True)
 
 
 class MemoryCache:

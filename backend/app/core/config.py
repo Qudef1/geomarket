@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     http_user_agent: str = "GeoMarketAI/0.1 (development)"
     cache_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
     cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origin_regex: str | None = r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"
     radii_m: tuple[int, ...] = (250, 500, 1000)
     max_candidates: int = 400
     request_timeout_seconds: float = 15.0

@@ -9,7 +9,7 @@ class ST_DWithin(GenericFunction[bool]):
     inherit_cache = True
 
 
-def candidates_within(location_wkt: str, radius_m: float) -> Select[tuple[Candidate]]:
+def candidates_within(location_wkt: str, radius_m: float) -> Select[Candidate]:
     """Build a PostGIS geography radius query; calculation remains in the database."""
     return select(Candidate).where(
         ST_DWithin(Candidate.location, f"SRID=4326;{location_wkt}", radius_m)

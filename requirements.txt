@@ -12,8 +12,8 @@ distlib==0.4.3
 fastapi==0.141.1
 filelock==3.32.7
 GeoAlchemy2==0.20.0
-# Editable Git install with no remote (geomarket-ai==0.1.0)
--e d:\projects\geomarket
+# Editable project install (geomarket-ai==0.1.0)
+-e .
 greenlet==3.5.6
 h11==0.16.0
 httpcore==1.0.9
